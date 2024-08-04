@@ -1,4 +1,5 @@
 import sys
+import time
 import logging
 from project import Project
 from models import ProjectRequest
@@ -17,6 +18,7 @@ def create_video(project_name, initial_idea, target_audience):
             target_audience_persona=target_audience,
         )
     )
+    START_TIME = time.time()
     with st.spinner("Expanding Idea"):
         project.generate_idea()
     with st.spinner("Writing Script"):
@@ -27,6 +29,7 @@ def create_video(project_name, initial_idea, target_audience):
         project.generate_audio_files()
     with st.spinner("Creating Video"):
         video = project.generate_video()
+    logging.info(f"Total execution time: {time.time() - START_TIME}s")
     st.success("Video Generated 🔥")
     return video
 

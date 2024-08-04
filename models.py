@@ -1,11 +1,22 @@
 from pydantic import BaseModel, field_validator
 from typing import List
 
+class ImageData(BaseModel):
+    image_description: str
+    narration: str
+
+class ImageDataList(BaseModel):
+    items: List[ImageData]
 class PromptResponseModel(BaseModel):
     prompt_type: str
     func_input_kwargs: dict
     prompt_used: str
     generate_content_response: str
+class PromptJsonResponseModel(BaseModel):
+    prompt_type: str
+    func_input_kwargs: dict
+    prompt_used: str
+    generate_content_response: ImageDataList
 
 class ImagePrompt(BaseModel):
     prompt: str
@@ -13,13 +24,6 @@ class ImagePrompt(BaseModel):
 
 class ImagePromptExtractionResult(BaseModel):
     Prompts_list: List[ImagePrompt]
-
-class ImageData(BaseModel):
-    image_description: str
-    narration: str
-
-class ImageDataList(BaseModel):
-    items: List[ImageData]
 
 class ProjectRequest(BaseModel):
     project_name: str

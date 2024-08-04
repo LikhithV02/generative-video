@@ -3,13 +3,20 @@ import json
 import ast
 import requests
 import logging
-from models import ProjectRequest, PromptResponseModel, ImageDataList
+from models import ProjectRequest, PromptResponseModel, ImageDataList, PromptJsonResponseModel
 from ideation import Ideation
 from narration import Narration
 from generative_ai import generate_image, generate_audio
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
+from pydantic import BaseModel, field_validator
+from typing import List
 
+class ImageData(BaseModel):
+    image_description: str
+    narration: str
 
+class ImageDataList(BaseModel):
+    items: List[ImageData]
 class Project:
     def __init__(self, project_request: ProjectRequest) -> None:
         self.project_request = project_request
@@ -47,15 +54,23 @@ class Project:
         return self
 
     def generate_image_files(self):
-        narration_response = PromptResponseModel.model_validate_json(
+        narration_response = PromptJsonResponseModel.model_validate_json(
             pathlib.Path(
                 f"projects/{self.project_request.project_name}/narration.json"
             ).read_text()
         )
-        scenes = ImageDataList.model_validate_json(narration_response.generate_content_response)
+        scenes = narration_response.generate_content_response
+        print("Type: ", type(scenes))
+        print("Actual scenes", scenes)
         # Extract the list part from the string
         # list_string = narration_response.generate_content_response.split('=', 1)[1]
-
+        # print(type(list_string))
+        # print(list_string)
+        # if type(list_string) == str:
+        #     data = ast.literal_eval(list_string)
+        # else:
+        # data = json.loads(list_string)
+            
         # # Use ast.literal_eval to safely evaluate the string as a Python expression
         # data = ast.literal_eval(list_string)
 
@@ -66,7 +81,7 @@ class Project:
         )
         image_folder.mkdir(exist_ok=True, parents=True)
         for i, scene in enumerate(scenes.items, start=1):
-            image_url = generate_image(scene["image_description"])
+            image_url = generate_image(scene.image_description)
             # Send a GET request to the URL
             response = requests.get(image_url)
             image_path = image_folder / f"{i}.jpg"
@@ -83,19 +98,19 @@ class Project:
         return self
 
     def generate_audio_files(self):
-        narration_response = PromptResponseModel.model_validate_json(
+        narration_response = PromptJsonResponseModel.model_validate_json(
             pathlib.Path(
                 f"projects/{self.project_request.project_name}/narration.json"
             ).read_text()
         )
-        scenes = ImageDataList.model_validate_json(narration_response.generate_content_response)
+        scenes = narration_response.generate_content_response
         audio_folder = pathlib.Path(
             f"projects/{self.project_request.project_name}/audio"
         )
         audio_folder.mkdir(exist_ok=True, parents=True)
         for i, scene in enumerate(scenes.items, start=1):
             audio_path = audio_folder / f"{i}.wav"
-            generate_audio(scene["narration"], audio_path)
+            generate_audio(scene.narration, audio_path)
             logging.info(f'Audio content written to file "{audio_path}"')
 
     def generate_video(self):
